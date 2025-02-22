@@ -62,7 +62,16 @@ head(slavery_index)
 ```
 
 ```{r}
+# Column Prep
 
+slavery_index$Num_people <- replace(slavery_index$Num_people,slavery_index$Num_people=="", NA)
+
+slavery_index$Num_people <- as.numeric(gsub(",","",slavery_index$Num_people))
+
+slavery_index$Population <- as.numeric(gsub(",","",slavery_index$Population))
+
+marriage$Percent_married_15 <- as.double(replace(marriage$Percent_married_15, marriage$Percent_married_15=="-", NA))
 ```
+
 
 
