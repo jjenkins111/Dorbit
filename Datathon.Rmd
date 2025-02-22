@@ -27,6 +27,14 @@ slavery_index <- read.csv("data/Global_Slavery_Index_2023.csv")
 marriage <- read.csv("data/Percentage-of-Females-Married-by-15-years-old.csv")
 
 human_trafficking <- read.csv("data/human-trafficking-victims_new.csv")
+
+nrow(age_consent) #201
+nrow(slavery_index) # 180 
+nrow(marriage) #202
+nrow(human_trafficking) # 364
+head(human_trafficking) # 84
+
+unique(human_trafficking$Entity)
 ```
 
 
@@ -122,6 +130,23 @@ df1 <- data.frame(x = aocplot, y = 1:201)
 ggplot(df1, aes(x=aocplot)) +
   geom_bar()
 ```
+
+```{r}
+country_max <- slavery_index[which.max(slavery_index$Per_1000), ]
+country_min <- slavery_index[which.min(slavery_index$Per_1000), ]
+
+slavery_index |> arrange(desc(Per_1000))
+
+slavery_index |> filter(Region == "Asia and the Pacific") |> arrange(desc(Per_1000))
+
+
+# population of top 20
+# area for top 20
+
+
+top_10 <- slavery_index |> arrange(desc(Per_1000)) |> head(n=10)
+```
+
 
 
 
