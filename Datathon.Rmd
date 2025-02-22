@@ -33,8 +33,8 @@ human_trafficking <- read.csv("data/human-trafficking-victims_new.csv")
 head(age_consent)
 head(slavery_index)
 slavery_index <- slavery_index |>
-  rename(Prevelance = Estimated.prevalence.of.modern.slavery.per.1.000.population) |>
-  rename(Num_people = Estimated.number.of.people.in.modern.slavery)
+  rename(Per_1000 = Estimated.prevalence.of.modern.slavery.per.1.000.population) |>
+  rename(Num_modern_slavery = Estimated.number.of.people.in.modern.slavery)
 
 head(marriage)
 marriage <- marriage |>
@@ -43,13 +43,26 @@ marriage <- marriage |>
 
 head(human_trafficking)
 human_trafficking <- human_trafficking |>
-  rename(Detected_Number = Detected.victims.of.human.trafficking)
+  rename(Detected_Number = Detected.victims.of.human.trafficking) |>
+  rename(Country = Entity)
 ```
 
 ```{r}
 slavery_index <- left_join(slavery_index, age_consent, by = "Country")
-head(slavery_index)
 
 slavery_index <- left_join(slavery_index, marriage, by = "Country")
+head(slavery_index)
+
+slavery_index <- slavery_index |> mutate(across(everything(), ~replace_na(.x, NA)))
+
+head(slavery_index)
+
+# slavery_index <- slavery_index |>
+#   mutate(Percent_married_15 = recode(Percent_married_15, - = NA))
 ```
+
+```{r}
+
+```
+
 
