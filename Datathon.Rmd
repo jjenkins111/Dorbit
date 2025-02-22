@@ -76,7 +76,7 @@ slavery_index$Num_modern_slavery <- as.numeric(gsub(",","",slavery_index$Num_mod
 
 slavery_index$Population <- as.double(gsub(",","",slavery_index$Population))
 
-marriage$Percent_married_15 <- as.double(replace(marriage$Percent_married_15, marriage$Percent_married_15=="-", NA))
+slavery_index$Percent_married_15 <- as.double(replace(slavery_index$Percent_married_15, slavery_index$Percent_married_15=="-", NA))
 
 ```
 
@@ -110,9 +110,19 @@ Regions <- data.frame(
                      Africa_sum, Arab_States_sum)
 )
 
-regions_graph <- Regions |> ggplot(aes(x = Region, y = Modern_Slavery)) +
-  geom_col(fill = "blue")
+(regions_graph <- Regions |> ggplot(aes(x = Region, y = Modern_Slavery)) +
+  geom_col(fill = "cornflowerblue", col = "royalblue4"))
 ```
+
+```{r}
+aocplot <- as.double(replace(age_consent$Age.Of.Consent, age_consent$Age.Of.Consent=="Must be married", 0))
+
+df1 <- data.frame(x = aocplot, y = 1:201)
+
+ggplot(df1, aes(x=aocplot)) +
+  geom_bar()
+```
+
 
 
 
