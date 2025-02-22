@@ -25,13 +25,23 @@ age_consent <- read.csv("data/Age-of-Sexual-Consent.csv")
 slavery_index <- read.csv("data/Global_Slavery_Index_2023.csv")
 marriage <- read.csv("data/Percentage-of-Females-Married-by-15-years-old.csv")
 
-human_trafficking <- read.csv("data/Global_Slavery_Index_2023.csv")
+human_trafficking <- read.csv("data/human-trafficking-victims_new.csv")
 ```
 
 
 ```{r}
 head(age_consent)
 head(slavery_index)
+slavery_index <- slavery_index |>
+  rename(Prevelance = Estimated.prevalence.of.modern.slavery.per.1.000.population) |>
+  rename(Num_people = Estimated.number.of.people.in.modern.slavery)
 
+head(marriage)
+marriage <- marriage |>
+  rename(Percent_married_15 = Percentage.of.Females.Married.by.15.years.old)
+
+head(human_trafficking)
+human_trafficking <- human_trafficking |>
+  rename(Detected_Number = Detected.victims.of.human.trafficking)
 ```
 
