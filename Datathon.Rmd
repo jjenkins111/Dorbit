@@ -45,3 +45,7 @@ human_trafficking <- human_trafficking |>
   rename(Detected_Number = Detected.victims.of.human.trafficking)
 ```
 
+```{r}
+
+```
+
