@@ -17,3 +17,12 @@ print("hello")
 print("wainwright")
 ```
 
+```{r}
+# data upload
+age_consent <- read.csv("data/Age-of-Sexual-Consent.csv")
+slavery_index <- read.csv("data/Global_Slavery_Index_2023.csv")
+marriage <- read.csv("data/Percentage-of-Females-Married-by-15-years-old.csv")
+
+human_trafficking <- read.csv("data/Global_Slavery_Index_2023.csv")
+```
+
