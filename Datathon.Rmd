@@ -10,12 +10,14 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ```{r}
-print("hello")
+library(tidyverse)
+library(corrplot)
+library(ggplot2)
+library(dbplyr)
+library(colorspace)
+library(tidyr)
 ```
 
-```{r}
-print("wainwright")
-```
 
 ```{r}
 # data upload
@@ -24,5 +26,12 @@ slavery_index <- read.csv("data/Global_Slavery_Index_2023.csv")
 marriage <- read.csv("data/Percentage-of-Females-Married-by-15-years-old.csv")
 
 human_trafficking <- read.csv("data/Global_Slavery_Index_2023.csv")
+```
+
+
+```{r}
+head(age_consent)
+head(slavery_index)
+
 ```
 
