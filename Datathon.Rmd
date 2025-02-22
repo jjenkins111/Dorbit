@@ -38,7 +38,8 @@ slavery_index <- slavery_index |>
 
 head(marriage)
 marriage <- marriage |>
-  rename(Percent_married_15 = Percentage.of.Females.Married.by.15.years.old)
+  rename(Percent_married_15 = Percentage.of.Females.Married.by.15.years.old) |>
+  rename(Country = Countries)
 
 head(human_trafficking)
 human_trafficking <- human_trafficking |>
@@ -46,6 +47,9 @@ human_trafficking <- human_trafficking |>
 ```
 
 ```{r}
+slavery_index <- left_join(slavery_index, age_consent, by = "Country")
+head(slavery_index)
 
+slavery_index <- left_join(slavery_index, marriage, by = "Country")
 ```
 
