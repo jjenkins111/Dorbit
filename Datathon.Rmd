@@ -16,6 +16,7 @@ library(ggplot2)
 library(dbplyr)
 library(colorspace)
 library(tidyr)
+library(astsa)
 ```
 
 
@@ -45,33 +46,74 @@ head(human_trafficking)
 human_trafficking <- human_trafficking |>
   rename(Detected_Number = Detected.victims.of.human.trafficking) |>
   rename(Country = Entity)
+
+#slavery_index |> group_by(Region)
 ```
 
 ```{r}
 slavery_index <- left_join(slavery_index, age_consent, by = "Country")
 
 slavery_index <- left_join(slavery_index, marriage, by = "Country")
-head(slavery_index)
 
-slavery_index <- slavery_index |> mutate(across(everything(), ~replace_na(.x, NA)))
+#slavery_index <- slavery_index |> mutate(across(everything(), ~replace_na(.x, NA)))
 
 head(slavery_index)
 
 # slavery_index <- slavery_index |>
 #   mutate(Percent_married_15 = recode(Percent_married_15, - = NA))
+
+#slavery_index[5, "Percent_married_15"]
+
 ```
 
 ```{r}
 # Column Prep
 
-slavery_index$Num_people <- replace(slavery_index$Num_people,slavery_index$Num_people=="", NA)
+slavery_index$Num_modern_slavery <- replace(slavery_index$Num_modern_slavery,
+                                            slavery_index$Num_modern_slavery=="", NA)
 
-slavery_index$Num_people <- as.numeric(gsub(",","",slavery_index$Num_people))
+slavery_index$Num_modern_slavery <- as.numeric(gsub(",","",slavery_index$Num_modern_slavery))
 
-slavery_index$Population <- as.numeric(gsub(",","",slavery_index$Population))
+slavery_index$Population <- as.double(gsub(",","",slavery_index$Population))
 
 marriage$Percent_married_15 <- as.double(replace(marriage$Percent_married_15, marriage$Percent_married_15=="-", NA))
+
 ```
+
+```{r}
+slavery_index |> group_by(Region)
+
+unique(slavery_index$Region)
+
+
+Asia_Pacific_sum <- sum(slavery_index |> filter(Region == "Asia and the Pacific") |> select("Num_modern_slavery"), na.rm = T)
+
+Americas_sum <- sum(slavery_index |> filter(Region == "Americas") |> select("Num_modern_slavery"), na.rm = T)
+
+Euro_Central_Asia_sum <- sum(slavery_index |> 
+                               filter(Region == "Europe and Central Asia") |>
+                               select("Num_modern_slavery"), na.rm = T)
+Africa_sum <- sum(slavery_index |> 
+                               filter(Region == "Africa") |>
+                               select("Num_modern_slavery"), na.rm = T)
+
+Arab_States_sum <- sum(slavery_index |> 
+                               filter(Region == "Arab States") |>
+                               select("Num_modern_slavery"), na.rm = T)
+
+Regions <- data.frame(
+  Region = c("Asia and the Pacific", 
+             "Americas", "Europe and Central Asia", 
+             "Africa", "Arab States"), 
+  Modern_Slavery = c(Asia_Pacific_sum, 
+                     Americas_sum, Euro_Central_Asia_sum, 
+                     Africa_sum, Arab_States_sum)
+)
+
+regions_graph <- Regions |> ggplot(aes(x = Region, y = Modern_Slavery)) +
+  geom_col(fill = "blue")
+```
+
 
 
 
