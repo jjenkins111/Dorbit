@@ -149,6 +149,41 @@ top_10 <- slavery_index |> arrange(desc(Per_100000)) |> head(n=10)
 ```
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ```{r}
 grouped <-human_trafficking %>%
   group_by(Country) %>%
