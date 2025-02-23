@@ -42,7 +42,7 @@ unique(human_trafficking$Entity)
 head(age_consent)
 head(slavery_index)
 slavery_index <- slavery_index |>
-  rename(Per_1000 = Estimated.prevalence.of.modern.slavery.per.1.000.population) |>
+  rename(Per_100000 = Estimated.prevalence.of.modern.slavery.per.1.000.population) |>
   rename(Num_modern_slavery = Estimated.number.of.people.in.modern.slavery)
 
 head(marriage)
@@ -86,6 +86,7 @@ slavery_index$Population <- as.double(gsub(",","",slavery_index$Population))
 
 slavery_index$Percent_married_15 <- as.double(replace(slavery_index$Percent_married_15, slavery_index$Percent_married_15=="-", NA))
 
+slavery_index$Per_100000 <- slavery_index$Per_100000 * 100
 ```
 
 ```{r}
@@ -132,23 +133,53 @@ ggplot(df1, aes(x=aocplot)) +
 ```
 
 ```{r}
-country_max <- slavery_index[which.max(slavery_index$Per_1000), ]
-country_min <- slavery_index[which.min(slavery_index$Per_1000), ]
+country_max <- slavery_index[which.max(slavery_index$Per_100000), ]
+country_min <- slavery_index[which.min(slavery_index$Per_100000), ]
 
-slavery_index |> arrange(desc(Per_1000))
+slavery_index |> arrange(desc(Per_100000))
 
-slavery_index |> filter(Region == "Asia and the Pacific") |> arrange(desc(Per_1000))
+slavery_index |> filter(Region == "Asia and the Pacific") |> arrange(desc(Per_100000))
 
 
 # population of top 20
 # area for top 20
 
 
-top_10 <- slavery_index |> arrange(desc(Per_1000)) |> head(n=10)
+top_10 <- slavery_index |> arrange(desc(Per_100000)) |> head(n=10)
 ```
 
 
+```{r}
+grouped <-human_trafficking %>%
+  group_by(Country) %>%
+  arrange(Country, Year)
 
+grouped
+```
 
+```{r}
+Myanmar <- ts(grouped %>%
+            filter(Country == "Myanmar") %>%
+            select(c("Year", "Detected_Number")) %>%
+            subset(select=c(Year, Detected_Number)))
+
+India <- grouped %>%
+            filter(Country == "India") %>%
+            select(c("Year", "Detected_Number")) %>%
+            subset(select=c(Year, Detected_Number))
+
+Philippines <- grouped %>%
+            filter(Country == "Philippines") %>%
+            select(c("Year", "Detected_Number")) %>%
+            subset(select=c(Year, Detected_Number))
+
+Indonesia <- grouped %>%
+            filter(Country == "Indonesia") %>%
+            select(c("Year", "Detected_Number")) %>%
+            subset(select=c(Year, Detected_Number))
+
+ts.plot(Myanmar)
+
+```
 
 
