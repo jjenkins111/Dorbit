@@ -178,7 +178,7 @@ Indonesia <- grouped %>%
             select(c("Year", "Detected_Number")) %>%
             subset(select=c(Year, Detected_Number))
 
-ts.plot(Myanmar)
+ts.plot(India)
 
 ```
 
