@@ -17,6 +17,8 @@ library(dbplyr)
 library(colorspace)
 library(tidyr)
 library(astsa)
+library(maps)
+library(sf)
 ```
 
 
@@ -25,9 +27,11 @@ library(astsa)
 age_consent <- read.csv("data/Age-of-Sexual-Consent.csv")
 slavery_index <- read.csv("data/Global_Slavery_Index_2023.csv")
 marriage <- read.csv("data/Percentage-of-Females-Married-by-15-years-old.csv")
-
 human_trafficking <- read.csv("data/human-trafficking-victims_new.csv")
+inequality <- read.csv("data/Gender_Inequality_Index.csv")
+```
 
+```{r}
 nrow(age_consent) #201
 nrow(slavery_index) # 180 
 nrow(marriage) #202
@@ -38,11 +42,12 @@ unique(human_trafficking$Entity)
 ```
 
 
+
 ```{r}
 head(age_consent)
 head(slavery_index)
 slavery_index <- slavery_index |>
-  rename(Per_100000 = Estimated.prevalence.of.modern.slavery.per.1.000.population) |>
+  rename(Per_1000 = Estimated.prevalence.of.modern.slavery.per.1.000.population) |>
   rename(Num_modern_slavery = Estimated.number.of.people.in.modern.slavery)
 
 head(marriage)
@@ -74,6 +79,8 @@ head(slavery_index)
 
 ```
 
+
+
 ```{r}
 # Column Prep
 
@@ -86,7 +93,6 @@ slavery_index$Population <- as.double(gsub(",","",slavery_index$Population))
 
 slavery_index$Percent_married_15 <- as.double(replace(slavery_index$Percent_married_15, slavery_index$Percent_married_15=="-", NA))
 
-slavery_index$Per_100000 <- slavery_index$Per_100000 * 100
 ```
 
 ```{r}
@@ -95,32 +101,35 @@ slavery_index |> group_by(Region)
 unique(slavery_index$Region)
 
 
-Asia_Pacific_sum <- sum(slavery_index |> filter(Region == "Asia and the Pacific") |> select("Num_modern_slavery"), na.rm = T)
+Asia_Pacific_mean <- slavery_index |> filter(Region == "Asia and the Pacific") |> 
+  summarize(across(Per_1000, mean, na.rm=T))
 
-Americas_sum <- sum(slavery_index |> filter(Region == "Americas") |> select("Num_modern_slavery"), na.rm = T)
+Americas_mean <- slavery_index |> filter(Region == "Americas") |> summarize(across(Per_1000, mean, na.rm=T))
 
-Euro_Central_Asia_sum <- sum(slavery_index |> 
+Euro_Central_Asia_mean <- slavery_index |> 
                                filter(Region == "Europe and Central Asia") |>
-                               select("Num_modern_slavery"), na.rm = T)
-Africa_sum <- sum(slavery_index |> 
+                               summarize(across(Per_1000, mean, na.rm=T))
+Africa_mean <- slavery_index |> 
                                filter(Region == "Africa") |>
-                               select("Num_modern_slavery"), na.rm = T)
+                               summarize(across(Per_1000, mean, na.rm=T))
 
-Arab_States_sum <- sum(slavery_index |> 
+Arab_States_mean <- slavery_index |> 
                                filter(Region == "Arab States") |>
-                               select("Num_modern_slavery"), na.rm = T)
+                               summarize(across(Per_1000, mean, na.rm=T))
 
 Regions <- data.frame(
   Region = c("Asia and the Pacific", 
              "Americas", "Europe and Central Asia", 
              "Africa", "Arab States"), 
-  Modern_Slavery = c(Asia_Pacific_sum, 
-                     Americas_sum, Euro_Central_Asia_sum, 
-                     Africa_sum, Arab_States_sum)
+  Mean_Per_1000 = c(Asia_Pacific_mean[1,1], 
+                     Americas_mean[1,1], Euro_Central_Asia_mean[1,1], 
+                     Africa_mean[1,1], Arab_States_mean[1,1])
 )
 
-(regions_graph <- Regions |> ggplot(aes(x = Region, y = Modern_Slavery)) +
-  geom_col(fill = "cornflowerblue", col = "royalblue4"))
+regions_graph <- Regions |> mutate(Region = as.factor(Region))|> 
+  mutate(Region = fct_reorder(Region, desc(Mean_Per_1000))) |> ggplot(aes(x = Region, y = Mean_Per_1000)) +
+  geom_col(fill = "cornflowerblue", col = "royalblue4") +
+  ylab("Average Modern Slavery per 1000 People")
 ```
 
 ```{r}
@@ -133,86 +142,181 @@ ggplot(df1, aes(x=aocplot)) +
 ```
 
 ```{r}
-country_max <- slavery_index[which.max(slavery_index$Per_100000), ]
-country_min <- slavery_index[which.min(slavery_index$Per_100000), ]
+country_max <- slavery_index[which.max(slavery_index$Per_1000), ]
+country_min <- slavery_index[which.min(slavery_index$Per_1000), ]
 
-slavery_index |> arrange(desc(Per_100000))
+slavery_index |> arrange(desc(Per_1000))
 
-slavery_index |> filter(Region == "Asia and the Pacific") |> arrange(desc(Per_100000))
+slavery_index |> filter(Region == "Asia and the Pacific") |> arrange(desc(Per_1000))
 
 
 # population of top 20
 # area for top 20
 
 
-top_10 <- slavery_index |> arrange(desc(Per_100000)) |> head(n=10)
+top_20 <- slavery_index |> arrange(desc(Per_1000)) |> head(n=20)
+bottom_20 <- slavery_index |> arrange(Per_1000) |> head(n=20)
+
+
 ```
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 ```{r}
-grouped <-human_trafficking %>%
-  group_by(Country) %>%
-  arrange(Country, Year)
+highest_pop <- slavery_index |> arrange(desc(Population))
+#cutoff <- quantile(slavery_index$Population, probs = 0.992, na.rm = T)
+# outliers <- slavery_index %>% filter(Population > cutoff)
 
-grouped
+lowest_pop <- slavery_index |> arrange(Population) |> filter(!is.na(Per_1000))
+
+# biggest countries - don't use
+biggest_pop_graph <- head(highest_pop, n=10) |> mutate(Country = as.factor(Country)) |> 
+  mutate(Country = fct_reorder(Country, Population, .desc = T)) |> ggplot(aes(x = Country, y = Per_1000)) +
+  geom_col(fill = "cornflowerblue", col = "royalblue4")
+
+# lowest pop - don't use
+lowest_pop_graph <- head(lowest_pop, n=10) |> mutate(Country = as.factor(Country)) |> 
+  mutate(Country = fct_reorder(Country, Population)) |> 
+  ggplot(aes(x = Country, y = Per_1000)) +
+  geom_col(fill = "cornflowerblue", col = "royalblue4")
+
+# top 20
+top_20_graph <- top_20 |> mutate(Country = as.factor(Country))|> 
+  mutate(Country = fct_reorder(Country, Per_1000)) |> 
+  ggplot(aes(x = Country, y = Per_1000, fill = Region)) +
+  geom_col() +
+  coord_flip() +
+  ylab("Modern Slavery per 1000 People") +
+  labs(title = "Top 20 Countries")
+
+# bottom 20
+bottom_20_graph <- bottom_20 |> mutate(Country = as.factor(Country))|> 
+  mutate(Country = fct_reorder(Country, Per_1000)) |> 
+  ggplot(aes(x = Country, y = Per_1000, fill = Region)) +
+  geom_col() +
+  coord_flip() + 
+  ylab("Modern Slavery per 1000 People") +
+  labs(title = "Bottom 20 Countries")
+  
+# population
+population_graph <- slavery_index |> ggplot(aes(x=Population, y=Per_1000)) +
+  geom_point() +
+  geom_point(col = "darkslategray") +
+  ylab("Modern Slavery per 1000 People")
+
+population_without_outliers_graph <- slavery_index |> filter(!(Country == "China" | 
+                                        Country == "India" | Country == "Eritrea" | 
+                                          Country == "North Korea")) |> 
+  ggplot(aes(x=Population, y=Per_1000)) +
+  geom_point(col = "darkslategray") +
+  ylab("Modern Slavery per 1000 People")
+
+# Age of Consent
+age_consent_graph <- slavery_index |> ggplot(aes(x=Age.Of.Consent, y=Per_1000, col = Region)) +
+  geom_point() + 
+  xlab("Age of Consent") +
+  ylab("Modern Slavery per 1000 People")
+
+# Percent married before 15
+percent_married_15_graph <- slavery_index |> ggplot(aes(x=Percent_married_15, y=Per_1000)) +
+  geom_col(fill = "darkseagreen") +
+  xlab("Percent of Females Married before age 15") +
+  ylab("Modern Slavery per 1000 People")
+
+
+# all countries w/ values w/o country labels 
+all_countries_per_1000 <- slavery_index |> filter(!is.na(Per_1000)) |> mutate(Country = as.factor(Country)) |> 
+  mutate(Country = fct_reorder(Country, Per_1000)) |> 
+  ggplot(aes(x = Country, y = Per_1000, fill = Region)) +
+  geom_col() +
+  coord_flip() +
+  theme(
+    axis.ticks.y = element_blank(),
+    axis.text.y = element_blank()
+  ) +
+  ylab("Modern Slavery per 1000 People")
 ```
 
 ```{r}
-Myanmar <- ts(grouped %>%
-            filter(Country == "Myanmar") %>%
-            select(c("Year", "Detected_Number")) %>%
-            subset(select=c(Year, Detected_Number)))
+# correlation
 
-India <- grouped %>%
-            filter(Country == "India") %>%
-            select(c("Year", "Detected_Number")) %>%
-            subset(select=c(Year, Detected_Number))
+x_mx <- slavery_index[, !(names(slavery_index) %in% c("Country", "Region"))] |> 
+  filter(!(Age.Of.Consent == "Must be married")) |> apply(2, as.double)
+corr_mx <- cor(x_mx, use = "pairwise.complete.obs")
 
-Philippines <- grouped %>%
-            filter(Country == "Philippines") %>%
-            select(c("Year", "Detected_Number")) %>%
-            subset(select=c(Year, Detected_Number))
-
-Indonesia <- grouped %>%
-            filter(Country == "Indonesia") %>%
-            select(c("Year", "Detected_Number")) %>%
-            subset(select=c(Year, Detected_Number))
-
+sorted_corr <- sort(corr_mx[, "Per_1000"])
 ```
 
+```{r}
+slavery_index |> filter(Country == "United Kingdom")
+```
+forced labour, forced marriage, debt bondage, human trafficking, and child exploitation
 
+
+```{r}
+climate_change <- read.csv("data/climate_change_indicators.csv")
+
+head(climate_change)
+# Temperature change with respect to a baseline climatology, corresponding to the period 1951-1980
+# celcius
+
+climate_change <- climate_change |> select(!c(Source, Unit, 
+                                              Indicator, ISO2, CTS_Code, CTS_Name, CTS_Full_Descriptor))
+
+climate_2022 <- climate_change |> select(c(Country, ISO3, F2022))
+
+nrow(climate_2022)
+
+climate_2022 |> arrange(desc(F2022))
+
+climate_10_20 <- climate_change |> select(Country, ISO3, F2010:F2020) |> rowwise() |> 
+  mutate(mean_10_20 = mean(c_across(F2010:F2020)))
+
+climate_10_20 |> arrange(desc(mean_10_20))
+
+climate_10_20 <- climate_10_20 |> rowwise() |> 
+  mutate(sum_10_20 = sum(c_across(F2010:F2020)))
+
+climate_10_20 |> arrange(desc(sum_10_20))
+```
+
+```{r}
+pivot <- pivot_wider(human_trafficking, names_from = Year, values_from= Detected_Number)
+
+first <- c()
+last <- c()
+
+for(i in 1:nrow(pivot)) {
+  pivmin <- pivot[i,]
+  pivmin2 <- as.vector(pivmin[-c(1,2)])
+  first[i] <- pivot[i, 2 + which(!is.na(pivmin2))[1]]
+  last[i] <- tail(pivmin2[!is.na(pivmin2)], 1)
+}
+
+last <- as.numeric(last)
+first <- as.numeric(first)
+diffs <- last - first
+diffs.noz <- if(length(which(diffs==0)!=0)) diffs[-which(diffs==0)]
+diffs.df <- data.frame(diffs.noz[-16])
+
+ggplot(diffs.df, aes(x = diffs.noz[-16])) +
+  geom_boxplot(fill = "lightcyan3") +
+  xlab("Differences in Trafficking Instances (Most Recent - Oldest)")
+```
+
+```{r}
+human_trafficking %>%
+  filter(Code %in% c("USA", "GBR", "DEU", "ROU", "NGA")) %>%
+  drop_na() %>%
+  ggplot() + 
+    geom_line(aes(x=Year, y = Detected_Number, col = Country,))
+```
+
+```{r, warning=FALSE}
+corr <- left_join(slavery_index, inequality, by="Country")
+
+temp <- data.frame(year = rep(c("1990", "2000", "2010", "2020"), each = nrow(inequality)),
+                   values = c(inequality$Gender.Inequality.Index..1990., inequality$Gender.Inequality.Index..2000., inequality$Gender.Inequality.Index..2010., inequality$Gender.Inequality.Index..2020.))
+
+ggplot(temp, aes(x = year, y = values, fill = year)) +
+  geom_boxplot()
+```
